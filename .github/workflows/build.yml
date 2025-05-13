@@ -1,0 +1,72 @@
+name: Build OpenKey
+
+on:
+  # push:
+  #   branches:
+  #     - master
+  # pull_request:
+  #   branches:
+  #     - master
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build Configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      platform:
+        description: 'Build Platform'
+        required: true
+        default: 'x86'
+        type: choice
+        options:
+          - x86
+          - x64
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v1.3.1
+      
+    - name: Build Solution
+      run: |
+        $configuration = "${{ github.event_name == 'workflow_dispatch' && inputs.configuration || 'Release' }}"
+        $platform = "${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'x86' }}"
+        $outputPath= "${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'x86' }}/Release"
+        MSBuild.exe "Sources/OpenKey/win32/OpenKey/OpenKey.sln" /p:Configuration=$configuration /p:Platform=$platform /p:OutDir="./$configuration/$platform/" /p:IntDir="./$configuration/$platform/"
+        Write-Host "Checking directory structure in OpenKey folder:"
+        Get-ChildItem -Path "." -Recurse -Directory | Select-Object FullName
+        Write-Host "Looking for built files:"
+        Get-ChildItem -Path "." -Recurse -File -Include *.exe, *.dll | Select-Object FullName
+
+    - name: Prepare Artifact Directory
+      run: |
+        $configuration = "${{ github.event_name == 'workflow_dispatch' && inputs.configuration || 'Release' }}"
+        $platform = "${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'x86' }}"
+        
+        # Create the target directory
+        New-Item -Path "ArtifactOutput/$configuration/$platform" -ItemType Directory -Force
+        
+        # Copy the OpenKey exe
+        Copy-Item -Path "Sources/OpenKey/win32/OpenKey/OpenKey/$configuration/$platform/*.exe" -Destination "ArtifactOutput/$configuration/$platform/" -Force
+        
+        # Copy the OpenKeyUpdate exe
+        Copy-Item -Path "Sources/OpenKey/win32/OpenKey/OpenKeyUpdate/$configuration/$platform/*.exe" -Destination "ArtifactOutput/$configuration/$platform/" -Force
+        
+        # List files in the target directory to verify
+        Get-ChildItem -Path "ArtifactOutput/$configuration/$platform"
+
+    - name: Archive Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenKey-Build
+        path: ArtifactOutput/${{ github.event_name == 'workflow_dispatch' && inputs.configuration || 'Release' }}/${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'x86' }}/
