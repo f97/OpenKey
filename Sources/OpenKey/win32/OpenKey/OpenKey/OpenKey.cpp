@@ -410,6 +410,21 @@ bool checkHotKey(int hotKeyData, bool checkKeyCode = true) {
 }
 
 void switchLanguage() {
+	// Check if current application is excluded - don't allow switching to Vietnamese
+	string& exe = OpenKeyHelper::getFrontMostAppExecuteName();
+	if (isAppExcluded(exe)) {
+		// Force English mode for excluded applications
+		if (vLanguage != 0) {
+			vLanguage = 0;
+			AppDelegate::getInstance()->onInputMethodChangedFromHotKey();
+		}
+		// Play beep to indicate switch attempt was blocked
+		if (HAS_BEEP(vSwitchKeyStatus))
+			MessageBeep(MB_ICONHAND); // Use error sound
+		startNewSession();
+		return;
+	}
+	
 	if (vLanguage == 0)
 		vLanguage = 1;
 	else

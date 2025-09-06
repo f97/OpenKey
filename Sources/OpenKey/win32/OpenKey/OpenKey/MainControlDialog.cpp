@@ -359,6 +359,7 @@ void MainControlDialog::fillData() {
     SendMessage(checkTempOffOpenKey, BM_SETCHECK, vTempOffOpenKey ? 1 : 0, 0);
 
     SendMessage(checkSmartSwitchKey, BM_SETCHECK, vUseSmartSwitchKey ? 1 : 0, 0);
+    EnableWindow(hConfigureExclusionButton, vUseSmartSwitchKey ? TRUE : FALSE);
     SendMessage(checkCapsFirstChar, BM_SETCHECK, vUpperCaseFirstChar ? 1 : 0, 0);
     SendMessage(checkQuickTelex, BM_SETCHECK, vQuickTelex ? 1 : 0, 0);
     SendMessage(checkUseMacro, BM_SETCHECK, vUseMacro ? 1 : 0, 0);
@@ -490,6 +491,7 @@ void MainControlDialog::onCheckboxClicked(const HWND& hWnd) {
     else if (hWnd == checkSmartSwitchKey) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vUseSmartSwitchKey, val ? 1 : 0);
+        EnableWindow(hConfigureExclusionButton, vUseSmartSwitchKey ? TRUE : FALSE);
     }
     else if (hWnd == checkCapsFirstChar) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
@@ -639,48 +641,103 @@ void MainControlDialog::onUpdateButton() {
 }
 
 void MainControlDialog::onConfigureExclusionButton() {
-    OPENFILENAME ofn;
-    TCHAR szFile[260] = { 0 };
+    // Get current exclusion list
+    vector<string> excludedApps = getExcludedApps();
     
-    // Initialize OPENFILENAME
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hDlg;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0");
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.lpstrTitle = _T("Chọn ứng dụng để loại trừ khỏi gõ tiếng Việt");
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    // Build message showing current exclusions
+    wstring message = L"Danh sách ứng dụng đã loại trừ:\n\n";
     
-    // Display the Open dialog box
-    if (GetOpenFileName(&ofn) == TRUE) {
-        // Extract just the filename from the full path
-        TCHAR* filename = _tcsrchr(szFile, _T('\\'));
-        if (filename != NULL) {
-            filename++; // Move past the backslash
-        } else {
-            filename = szFile; // Use the whole string if no backslash found
+    if (excludedApps.empty()) {
+        message += L"(Chưa có ứng dụng nào được loại trừ)\n\n";
+    } else {
+        for (size_t i = 0; i < excludedApps.size(); i++) {
+            // Convert UTF-8 to wide string for display
+            int size_needed = MultiByteToWideChar(CP_UTF8, 0, excludedApps[i].c_str(), (int)excludedApps[i].length(), NULL, 0);
+            std::wstring wstr(size_needed, 0);
+            MultiByteToWideChar(CP_UTF8, 0, excludedApps[i].c_str(), (int)excludedApps[i].length(), &wstr[0], size_needed);
+            
+            message += std::to_wstring(i + 1) + L". " + wstr + L"\n";
         }
+        message += L"\n";
+    }
+    
+    message += L"Chọn hành động:\n";
+    message += L"YES = Thêm ứng dụng mới\n";
+    message += L"NO = Xóa tất cả\n";
+    message += L"CANCEL = Đóng";
+    
+    int result = MessageBox(hDlg, message.c_str(), L"Cấu hình loại trừ ứng dụng", MB_YESNOCANCEL | MB_ICONQUESTION);
+    
+    if (result == IDYES) {
+        // Add new application
+        OPENFILENAME ofn;
+        TCHAR szFile[260] = { 0 };
         
-        // Convert to UTF-8 for the engine
-        int size_needed = WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), NULL, 0, NULL, NULL);
-        std::string exeName(size_needed, 0);
-        WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), &exeName[0], size_needed, NULL, NULL);
+        // Initialize OPENFILENAME
+        ZeroMemory(&ofn, sizeof(ofn));
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hDlg;
+        ofn.lpstrFile = szFile;
+        ofn.nMaxFile = sizeof(szFile);
+        ofn.lpstrFilter = _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0");
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFileTitle = NULL;
+        ofn.nMaxFileTitle = 0;
+        ofn.lpstrInitialDir = NULL;
+        ofn.lpstrTitle = _T("Chọn ứng dụng để loại trừ khỏi gõ tiếng Việt");
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
         
-        // Add to exclusion list
-        addAppToExclusionList(exeName);
-        
-        // Save the exclusion list
-        saveExclusionListData();
-        
-        // Show confirmation message
-        WCHAR msg[512];
-        wsprintf(msg, _T("Ứng dụng '%s' đã được thêm vào danh sách loại trừ.\nOpenKey sẽ không bao giờ gõ tiếng Việt trong ứng dụng này."), filename);
-        MessageBox(hDlg, msg, _T("Thêm vào danh sách loại trừ"), MB_OK | MB_ICONINFORMATION);
+        // Display the Open dialog box
+        if (GetOpenFileName(&ofn) == TRUE) {
+            // Extract just the filename from the full path
+            TCHAR* filename = _tcsrchr(szFile, _T('\\'));
+            if (filename != NULL) {
+                filename++; // Move past the backslash
+            } else {
+                filename = szFile; // Use the whole string if no backslash found
+            }
+            
+            // Convert to UTF-8 for the engine
+            int size_needed = WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), NULL, 0, NULL, NULL);
+            std::string exeName(size_needed, 0);
+            WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), &exeName[0], size_needed, NULL, NULL);
+            
+            // Check if already excluded
+            if (isAppExcluded(exeName)) {
+                WCHAR msg[512];
+                wsprintf(msg, _T("Ứng dụng '%s' đã có trong danh sách loại trừ."), filename);
+                MessageBox(hDlg, msg, _T("Thông báo"), MB_OK | MB_ICONINFORMATION);
+            } else {
+                // Add to exclusion list
+                addAppToExclusionList(exeName);
+                
+                // Save the exclusion list
+                saveExclusionListData();
+                
+                // Show confirmation message
+                WCHAR msg[512];
+                wsprintf(msg, _T("Ứng dụng '%s' đã được thêm vào danh sách loại trừ.\nOpenKey sẽ không bao giờ gõ tiếng Việt trong ứng dụng này."), filename);
+                MessageBox(hDlg, msg, _T("Thêm vào danh sách loại trừ"), MB_OK | MB_ICONINFORMATION);
+            }
+        }
+    } else if (result == IDNO && !excludedApps.empty()) {
+        // Clear all exclusions
+        int confirmResult = MessageBox(hDlg, 
+            _T("Bạn có chắc chắn muốn xóa tất cả ứng dụng khỏi danh sách loại trừ?"), 
+            _T("Xác nhận xóa"), 
+            MB_YESNO | MB_ICONWARNING);
+            
+        if (confirmResult == IDYES) {
+            // Clear all exclusions
+            for (const auto& app : excludedApps) {
+                removeAppFromExclusionList(app);
+            }
+            
+            // Save the exclusion list
+            saveExclusionListData();
+            
+            MessageBox(hDlg, _T("Đã xóa tất cả ứng dụng khỏi danh sách loại trừ."), _T("Hoàn thành"), MB_OK | MB_ICONINFORMATION);
+        }
     }
 }
 
