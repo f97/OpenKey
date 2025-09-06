@@ -201,6 +201,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,69,123,10
     CONTROL         "Loại trừ ứng dụng thông minh",IDC_CHECK_SMART_SWITCH_KEY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,69,111,10
+    PUSHBUTTON      "Cấu hình...",IDC_BUTTON_CONFIGURE_EXCLUSION,120,68,50,12
     CONTROL         "Viết Hoa chữ cái đầu câu",IDC_CHECK_CAPS_FIRST_CHAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,50,95,10
     CONTROL         "Tự ghi nhớ bảng mã theo ứng dụng",IDC_CHECK_SMART_SWITCH_CODE,

@@ -15,6 +15,7 @@ redistribute your new version, it MUST be open source.
 #include "AppDelegate.h"
 #include <Shlobj.h>
 #include <Uxtheme.h>
+#include <Commdlg.h>
 
 #pragma comment(lib, "UxTheme.lib")
 
@@ -135,6 +136,8 @@ void MainControlDialog::initDialog() {
     checkSmartSwitchKey = GetDlgItem(hTabPage1, IDC_CHECK_SMART_SWITCH_KEY);
     createToolTip(checkSmartSwitchKey, IDS_STRING_SMART_SWITCH_KEY);
 
+    hConfigureExclusionButton = GetDlgItem(hTabPage1, IDC_BUTTON_CONFIGURE_EXCLUSION);
+
     checkCapsFirstChar = GetDlgItem(hTabPage1, IDC_CHECK_CAPS_FIRST_CHAR);
     createToolTip(checkCapsFirstChar, IDS_STRING_CAPS_FIRST_CHAR);
 
@@ -238,6 +241,9 @@ INT_PTR MainControlDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             break;
         case IDC_BUTTON_CHECK_UPDATE:
             onUpdateButton();
+            break;
+        case IDC_BUTTON_CONFIGURE_EXCLUSION:
+            onConfigureExclusionButton();
             break;
         case IDC_BUTTON_GO_SOURCE_CODE:
             ShellExecute(NULL, _T("open"), _T("https://github.com/tuyenvm/OpenKey"), NULL, NULL, SW_SHOWNORMAL);
@@ -630,6 +636,52 @@ void MainControlDialog::onUpdateButton() {
         MessageBox(hDlg, _T("Bạn đang dùng phiên bản mới nhất!"), _T("OpenKey Update"), MB_OK);
     }
     EnableWindow(hUpdateButton, true);
+}
+
+void MainControlDialog::onConfigureExclusionButton() {
+    OPENFILENAME ofn;
+    TCHAR szFile[260] = { 0 };
+    
+    // Initialize OPENFILENAME
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hDlg;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = _T("Executable Files (*.exe)\0*.exe\0All Files (*.*)\0*.*\0");
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle = _T("Chọn ứng dụng để loại trừ khỏi gõ tiếng Việt");
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    
+    // Display the Open dialog box
+    if (GetOpenFileName(&ofn) == TRUE) {
+        // Extract just the filename from the full path
+        TCHAR* filename = _tcsrchr(szFile, _T('\\'));
+        if (filename != NULL) {
+            filename++; // Move past the backslash
+        } else {
+            filename = szFile; // Use the whole string if no backslash found
+        }
+        
+        // Convert to UTF-8 for the engine
+        int size_needed = WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), NULL, 0, NULL, NULL);
+        std::string exeName(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, filename, (int)_tcslen(filename), &exeName[0], size_needed, NULL, NULL);
+        
+        // Add to exclusion list
+        addAppToExclusionList(exeName);
+        
+        // Save the exclusion list
+        saveExclusionListData();
+        
+        // Show confirmation message
+        WCHAR msg[512];
+        wsprintf(msg, _T("Ứng dụng '%s' đã được thêm vào danh sách loại trừ.\nOpenKey sẽ không bao giờ gõ tiếng Việt trong ứng dụng này."), filename);
+        MessageBox(hDlg, msg, _T("Thêm vào danh sách loại trừ"), MB_OK | MB_ICONINFORMATION);
+    }
 }
 
 void MainControlDialog::requestRestartAsAdmin() {
