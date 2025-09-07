@@ -32,8 +32,8 @@ private:
 public:
     ExclusionDialog(const HINSTANCE& hInstance, const int& resourceId);
     ~ExclusionDialog();
-    
     INT_PTR eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    void fillData() override; 
 };
 
 #endif
