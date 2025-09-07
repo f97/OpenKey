@@ -201,7 +201,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,151,69,123,10
     CONTROL         "Loại trừ ứng dụng thông minh",IDC_CHECK_SMART_SWITCH_KEY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,69,111,10
-    PUSHBUTTON      "",IDC_BUTTON_CONFIGURE_EXCLUSION,120,68,16,12,BS_ICON
+    PUSHBUTTON      "...",IDC_BUTTON_CONFIGURE_EXCLUSION,120,68,16,12
     CONTROL         "Viết Hoa chữ cái đầu câu",IDC_CHECK_CAPS_FIRST_CHAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,50,95,10
     CONTROL         "Tự ghi nhớ bảng mã theo ứng dụng",IDC_CHECK_SMART_SWITCH_CODE,
@@ -293,10 +293,12 @@ BEGIN
     LTEXT           "Danh sách ứng dụng được loại trừ khỏi gõ tiếng Việt:",IDC_STATIC,7,7,200,8
     CONTROL         "",IDC_LIST_EXCLUDED_APPS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,20,306,150
     PUSHBUTTON      "Thêm ứng dụng...",IDC_BUTTON_ADD_APP,7,180,70,14
-    PUSHBUTTON      "Xóa đã chọn",IDC_BUTTON_REMOVE_APP,85,180,60,14
-    PUSHBUTTON      "Xóa tất cả",IDC_BUTTON_CLEAR_ALL,153,180,60,14
-    DEFPUSHBUTTON   "Đóng",IDOK,220,180,50,14
-    LTEXT           "Các ứng dụng trong danh sách sẽ luôn được giữ ở chế độ tiếng Anh.",IDC_STATIC,7,200,300,16
+    PUSHBUTTON      "...",IDC_BUTTON_ADD_APP_DRAGDROP,85,180,20,14
+    PUSHBUTTON      "Xóa đã chọn",IDC_BUTTON_REMOVE_APP,115,180,60,14
+    PUSHBUTTON      "Xóa tất cả",IDC_BUTTON_CLEAR_ALL,183,180,60,14
+    DEFPUSHBUTTON   "Đóng",IDOK,250,180,50,14
+    LTEXT           "Các ứng dụng trong danh sách sẽ luôn được giữ ở chế độ tiếng Anh.",IDC_STATIC,7,200,300,8
+    LTEXT           "Bấm ""..."" để chọn ứng dụng bằng cách kéo thả con trỏ.",IDC_STATIC,7,212,300,8
 END
 
 
