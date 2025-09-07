@@ -58,6 +58,7 @@ extern wchar_t _logBuffer[1024];
 #define APP_CLASS _T("OpenKeyVietnameseInputMethod")
 
 extern void saveSmartSwitchKeyData();
+extern void saveExclusionListData();
 
 extern int vLanguage;
 extern int vInputType;

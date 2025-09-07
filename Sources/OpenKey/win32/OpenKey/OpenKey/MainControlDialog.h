@@ -27,7 +27,7 @@ private:
 	HWND checkSmartSwitchKey, checkCapsFirstChar, checkQuickTelex, checkUseMacro, checkUseMacroInEnglish;
 	HWND checkCreateDesktopShortcut, checkCheckNewVersion, checkRunAsAdmin, checkSupportMetroApp, checkMacroAutoCaps;
 	HWND checkFixChromium, checkRememberTableCode, checkTempOffOpenKey, checkAllowOtherLanguages;
-	HWND hUpdateButton;
+	HWND hUpdateButton, hConfigureExclusionButton;
 private:
 	void initDialog();
 	void onComboBoxSelected(const HWND& hCombobox, const int& comboboxId);
@@ -36,6 +36,7 @@ private:
 	void setSwitchKeyText(const HWND& hWnd, const UINT16 & keyCode);
 	void onTabIndexChanged();
 	void onUpdateButton();
+	void onConfigureExclusionButton();
 	void requestRestartAsAdmin();
 protected:
 	INT_PTR eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

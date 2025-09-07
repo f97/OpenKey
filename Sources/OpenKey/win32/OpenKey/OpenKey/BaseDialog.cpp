@@ -79,6 +79,10 @@ void BaseDialog::bringOnTop() {
 	SetActiveWindow(hDlg);
 }
 
+INT_PTR BaseDialog::doModal(HWND hWndParent) {
+	return DialogBoxParam(hInstance, MAKEINTRESOURCE(resId), hWndParent, DialogProc, (LPARAM)this);
+}
+
 HWND BaseDialog::getHwnd() {
 	return hDlg;
 }

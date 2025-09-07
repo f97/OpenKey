@@ -12,9 +12,11 @@ You can fork, modify, improve this program. If you
 redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "MainControlDialog.h"
+#include "ExclusionDialog.h"
 #include "AppDelegate.h"
 #include <Shlobj.h>
 #include <Uxtheme.h>
+#include <Commdlg.h>
 
 #pragma comment(lib, "UxTheme.lib")
 
@@ -135,6 +137,9 @@ void MainControlDialog::initDialog() {
     checkSmartSwitchKey = GetDlgItem(hTabPage1, IDC_CHECK_SMART_SWITCH_KEY);
     createToolTip(checkSmartSwitchKey, IDS_STRING_SMART_SWITCH_KEY);
 
+    hConfigureExclusionButton = GetDlgItem(hTabPage1, IDC_BUTTON_CONFIGURE_EXCLUSION);
+    createToolTip(hConfigureExclusionButton, IDS_STRING_CONFIGURE_EXCLUSION);
+
     checkCapsFirstChar = GetDlgItem(hTabPage1, IDC_CHECK_CAPS_FIRST_CHAR);
     createToolTip(checkCapsFirstChar, IDS_STRING_CAPS_FIRST_CHAR);
 
@@ -203,6 +208,7 @@ void MainControlDialog::initDialog() {
     SendDlgItemMessage(hDlg, IDBUTTON_OK, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon(hIns, MAKEINTRESOURCEW(IDI_ICON_OK_BUTTON)));
     SendDlgItemMessage(hDlg, ID_BTN_DEFAULT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon(hIns, MAKEINTRESOURCEW(IDI_ICON_DEFAULT_BUTTON)));
     SendDlgItemMessage(hDlg, IDBUTTON_EXIT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon(hIns, MAKEINTRESOURCEW(IDI_ICON_EXIT_BUTTON)));
+    SendDlgItemMessage(hTabPage1, IDC_BUTTON_CONFIGURE_EXCLUSION, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIcon(hIns, MAKEINTRESOURCEW(IDI_ICON_DEFAULT_BUTTON)));
     fillData();
 }
 
@@ -238,6 +244,9 @@ INT_PTR MainControlDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
             break;
         case IDC_BUTTON_CHECK_UPDATE:
             onUpdateButton();
+            break;
+        case IDC_BUTTON_CONFIGURE_EXCLUSION:
+            onConfigureExclusionButton();
             break;
         case IDC_BUTTON_GO_SOURCE_CODE:
             ShellExecute(NULL, _T("open"), _T("https://github.com/tuyenvm/OpenKey"), NULL, NULL, SW_SHOWNORMAL);
@@ -353,6 +362,7 @@ void MainControlDialog::fillData() {
     SendMessage(checkTempOffOpenKey, BM_SETCHECK, vTempOffOpenKey ? 1 : 0, 0);
 
     SendMessage(checkSmartSwitchKey, BM_SETCHECK, vUseSmartSwitchKey ? 1 : 0, 0);
+    EnableWindow(hConfigureExclusionButton, vUseSmartSwitchKey ? TRUE : FALSE);
     SendMessage(checkCapsFirstChar, BM_SETCHECK, vUpperCaseFirstChar ? 1 : 0, 0);
     SendMessage(checkQuickTelex, BM_SETCHECK, vQuickTelex ? 1 : 0, 0);
     SendMessage(checkUseMacro, BM_SETCHECK, vUseMacro ? 1 : 0, 0);
@@ -484,6 +494,7 @@ void MainControlDialog::onCheckboxClicked(const HWND& hWnd) {
     else if (hWnd == checkSmartSwitchKey) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
         APP_SET_DATA(vUseSmartSwitchKey, val ? 1 : 0);
+        EnableWindow(hConfigureExclusionButton, vUseSmartSwitchKey ? TRUE : FALSE);
     }
     else if (hWnd == checkCapsFirstChar) {
         val = (int)SendMessage(hWnd, BM_GETCHECK, 0, 0);
@@ -630,6 +641,12 @@ void MainControlDialog::onUpdateButton() {
         MessageBox(hDlg, _T("Bạn đang dùng phiên bản mới nhất!"), _T("OpenKey Update"), MB_OK);
     }
     EnableWindow(hUpdateButton, true);
+}
+
+void MainControlDialog::onConfigureExclusionButton() {
+    // Create and show the exclusion dialog
+    ExclusionDialog exclusionDialog(GetModuleHandle(NULL), IDD_DIALOG_EXCLUSION);
+    exclusionDialog.doModal(hDlg);
 }
 
 void MainControlDialog::requestRestartAsAdmin() {

@@ -61,6 +61,7 @@ static Uint32 _tempChar;
 static string macroText, macroContent;
 static int _languageTemp = 0; //use for smart switch key
 static vector<Byte> savedSmartSwitchKeyData; ////use for smart switch key
+static vector<Byte> savedExclusionListData; ////use for app exclusion list
 
 static bool _hasJustUsedHotKey = false;
 
@@ -162,6 +163,11 @@ void OpenKeyInit() {
 	BYTE* data = OpenKeyHelper::getRegBinary(_T("smartSwitchKey"), smartSwitchKeySize);
 	initSmartSwitchKey((Byte*)data, (int)smartSwitchKeySize);
 
+	//init and load exclusion list data
+	DWORD exclusionListSize;
+	BYTE* exclusionData = OpenKeyHelper::getRegBinary(_T("exclusionList"), exclusionListSize);
+	initExclusionList((Byte*)exclusionData, (int)exclusionListSize);
+
 	//init hook
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHookProcess, hInstance, 0);
@@ -172,6 +178,11 @@ void OpenKeyInit() {
 void saveSmartSwitchKeyData() {
 	getSmartSwitchKeySaveData(savedSmartSwitchKeyData);
 	OpenKeyHelper::setRegBinary(_T("smartSwitchKey"), savedSmartSwitchKeyData.data(), (int)savedSmartSwitchKeyData.size());
+}
+
+void saveExclusionListData() {
+	getExclusionListSaveData(savedExclusionListData);
+	OpenKeyHelper::setRegBinary(_T("exclusionList"), savedExclusionListData.data(), (int)savedExclusionListData.size());
 }
 
 static void InsertKeyLength(const Uint8& len) {
@@ -399,6 +410,21 @@ bool checkHotKey(int hotKeyData, bool checkKeyCode = true) {
 }
 
 void switchLanguage() {
+	// Check if current application is excluded - don't allow switching to Vietnamese
+	string& exe = OpenKeyHelper::getFrontMostAppExecuteName();
+	if (isAppExcluded(exe)) {
+		// Force English mode for excluded applications
+		if (vLanguage != 0) {
+			vLanguage = 0;
+			AppDelegate::getInstance()->onInputMethodChangedFromHotKey();
+		}
+		// Play beep to indicate switch attempt was blocked
+		if (HAS_BEEP(vSwitchKeyStatus))
+			MessageBeep(MB_ICONHAND); // Use error sound
+		startNewSession();
+		return;
+	}
+	
 	if (vLanguage == 0)
 		vLanguage = 1;
 	else
@@ -677,6 +703,18 @@ VOID CALLBACK winEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, H
 		string& exe = OpenKeyHelper::getFrontMostAppExecuteName();
 		if (exe.compare("explorer.exe") == 0) //dont apply with windows explorer
 			return;
+		
+		// Check if application is excluded - force English mode
+		if (isAppExcluded(exe)) {
+			if (vLanguage != 0) { // If currently Vietnamese, switch to English
+				vLanguage = 0;
+				AppDelegate::getInstance()->onInputMethodChangedFromHotKey();
+			}
+			vTempOffEngine(false);
+			startNewSession();
+			return;
+		}
+		
 		_languageTemp = getAppInputMethodStatus(exe, vLanguage | (vCodeTable << 1));
 		vTempOffEngine(false);
 		if (vUseSmartSwitchKey && (_languageTemp & 0x01) != vLanguage) {
