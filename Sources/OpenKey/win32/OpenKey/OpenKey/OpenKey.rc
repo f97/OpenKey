@@ -515,7 +515,7 @@ STRINGTABLE
 BEGIN
     IDS_STRING_OTHER_LANGUAGES 
                             "Cho phép gõ tiếng Việt với các ngôn ngữ ngoài tiếng Anh"
-IDS_STRING_CONFIGURE_EXCLUSION
+    IDS_STRING_CONFIGURE_EXCLUSION
                             "Cấu hình danh sách ứng dụng được loại trừ khỏi gõ tiếng Việt"
 END
 

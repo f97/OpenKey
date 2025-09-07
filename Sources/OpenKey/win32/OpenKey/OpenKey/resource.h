@@ -64,7 +64,7 @@
 #define IDD_DIALOG_TAB_INFO             149
 #define IDD_DIALOG_EXCLUSION            150
 #define IDS_STRING_OTHER_LANGUAGES		151
-IDS_STRING_CONFIGURE_EXCLUSION  152
+#define IDS_STRING_CONFIGURE_EXCLUSION  152
 #define IDC_COMBO1                      1000
 #define IDC_COMBO_INPUT_TYPE            1000
 #define IDC_CHECK1                      1001
