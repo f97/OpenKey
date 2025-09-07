@@ -356,6 +356,18 @@
 /* Class = "NSButtonCell"; title = "Khởi động cùng macOS"; ObjectID = "gw3-Ve-tj0"; */
 "gw3-Ve-tj0.title" = "Khởi động cùng macOS";
 
+/* Class = "NSTextFieldCell"; title = "Loại trừ ứng dụng:"; ObjectID = "Exc-Lab-Cell-1"; */
+"Exc-Lab-Cell-1.title" = "Loại trừ ứng dụng:";
+
+/* Class = "NSButtonCell"; title = "..."; ObjectID = "Exc-Add-Cell-1"; */
+"Exc-Add-Cell-1.title" = "...";
+
+/* Class = "NSButtonCell"; title = "Xóa"; ObjectID = "Exc-Remove-Cell-1"; */
+"Exc-Remove-Cell-1.title" = "Xóa";
+
+/* Class = "NSTextFieldCell"; title = "Các ứng dụng trong danh sách này sẽ không sử dụng OpenKey. Bấm ... để thêm ứng dụng mới bằng cách kéo thả con trỏ."; ObjectID = "Exc-Help-Cell-1"; */
+"Exc-Help-Cell-1.title" = "Các ứng dụng trong danh sách này sẽ không sử dụng OpenKey. Bấm ... để thêm ứng dụng mới bằng cách kéo thả con trỏ.";
+
 /* Class = "NSMenuItem"; title = "Smart Quotes"; ObjectID = "hQb-2v-fYv"; */
 "hQb-2v-fYv.title" = "Smart Quotes";
 

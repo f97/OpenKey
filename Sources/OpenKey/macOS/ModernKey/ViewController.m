@@ -11,6 +11,19 @@
 #import "AppDelegate.h"
 #import "MyTextField.h"
 
+// C++ functions from SmartSwitchKey
+#ifdef __cplusplus
+extern "C" {
+#endif
+    bool isAppExcluded(const char* bundleId);
+    void addAppToExclusionList(const char* bundleId);
+    void removeAppFromExclusionList(const char* bundleId);
+    char** getExcludedApps(int* count);
+    void freeExcludedApps(char** apps, int count);
+#ifdef __cplusplus
+}
+#endif
+
 extern AppDelegate* appDelegate;
 extern void OnSpellCheckingChanged(void);
 
@@ -48,6 +61,7 @@ extern int vPerformLayoutCompat;
     __weak IBOutlet NSButton *CustomBeepSound;
     NSArray* tabviews, *tabbuttons;
     NSRect tabViewRect;
+    NSMutableArray* excludedApps;
 }
 
 - (void)viewDidLoad {
@@ -58,6 +72,16 @@ extern int vPerformLayoutCompat;
     self.appOK.hidden = YES;
     self.permissionWarning.hidden = YES;
     self.retryButton.enabled = NO;
+    
+    // Initialize excluded apps array
+    excludedApps = [[NSMutableArray alloc] init];
+    
+    // Set up table view
+    [self.excludedAppsTable setDataSource:self];
+    [self.excludedAppsTable setDelegate:self];
+    
+    // Load excluded apps
+    [self loadExcludedApps];
  
     NSRect parentRect = self.viewParent.frame;
     parentRect.size.height = 490;
@@ -517,6 +541,166 @@ extern int vPerformLayoutCompat;
         self.CheckNewVersionButton.enabled = true;
         self.CheckNewVersionButton.title = @"Kiểm tra bản mới...";
     }];
+}
+
+#pragma mark - Excluded Apps Management
+
+- (void)loadExcludedApps {
+    [excludedApps removeAllObjects];
+    
+    int count;
+    char** apps = getExcludedApps(&count);
+    
+    for (int i = 0; i < count; i++) {
+        NSString* appName = [NSString stringWithCString:apps[i] encoding:NSUTF8StringEncoding];
+        [excludedApps addObject:appName];
+    }
+    
+    freeExcludedApps(apps, count);
+    [self.excludedAppsTable reloadData];
+}
+
+- (IBAction)onAddExcludedApp:(id)sender {
+    // Start app selection process with cursor tracking
+    [self startAppSelection];
+}
+
+- (IBAction)onRemoveExcludedApp:(id)sender {
+    NSInteger selectedRow = [self.excludedAppsTable selectedRow];
+    if (selectedRow >= 0 && selectedRow < [excludedApps count]) {
+        NSString* appToRemove = [excludedApps objectAtIndex:selectedRow];
+        const char* bundleId = [appToRemove cStringUsingEncoding:NSUTF8StringEncoding];
+        
+        removeAppFromExclusionList(bundleId);
+        [self loadExcludedApps];
+    }
+}
+
+- (IBAction)onExcludedAppSelected:(id)sender {
+    // Table selection changed - update remove button state
+    NSInteger selectedRow = [self.excludedAppsTable selectedRow];
+    [self.removeExcludedAppButton setEnabled:(selectedRow >= 0)];
+}
+
+- (void)startAppSelection {
+    // Change cursor to crosshair and start tracking
+    [[NSCursor crosshairCursor] set];
+    
+    // Show instructions
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Chọn ứng dụng để loại trừ"];
+    [alert setInformativeText:@"Kéo con trỏ đến ứng dụng bạn muốn loại trừ rồi bấm chuột."];
+    [alert addButtonWithTitle:@"Bắt đầu"];
+    [alert addButtonWithTitle:@"Hủy"];
+    
+    NSModalResponse response = [alert runModal];
+    if (response == NSAlertFirstButtonReturn) {
+        [self performAppDetection];
+    } else {
+        [[NSCursor arrowCursor] set];
+    }
+}
+
+- (void)performAppDetection {
+    // Monitor mouse clicks globally
+    NSEvent* (^monitorHandler)(NSEvent*) = ^NSEvent*(NSEvent* event) {
+        if (event.type == NSEventTypeLeftMouseDown) {
+            CGPoint location = CGPointMake(event.locationInWindow.x, event.locationInWindow.y);
+            NSString* bundleId = [self getAppBundleIdAtLocation:location];
+            
+            if (bundleId && ![bundleId isEqualToString:@""]) {
+                const char* cBundleId = [bundleId cStringUsingEncoding:NSUTF8StringEncoding];
+                addAppToExclusionList(cBundleId);
+                [self loadExcludedApps];
+                
+                NSAlert *confirmAlert = [[NSAlert alloc] init];
+                [confirmAlert setMessageText:@"Đã thêm ứng dụng"];
+                [confirmAlert setInformativeText:[NSString stringWithFormat:@"Ứng dụng '%@' đã được thêm vào danh sách loại trừ.", bundleId]];
+                [confirmAlert addButtonWithTitle:@"OK"];
+                [confirmAlert runModal];
+            }
+            
+            [[NSCursor arrowCursor] set];
+            return nil; // Stop monitoring
+        }
+        return event;
+    };
+    
+    id monitor = [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown handler:monitorHandler];
+    
+    // Clean up monitor after 10 seconds if no click
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [NSEvent removeMonitor:monitor];
+        [[NSCursor arrowCursor] set];
+    });
+}
+
+- (NSString*)getAppBundleIdAtLocation:(CGPoint)location {
+    // Get the application at the specified location
+    CGEventRef event = CGEventCreateMouseEvent(NULL, kCGEventLeftMouseDown, location, kCGMouseButtonLeft);
+    CGEventRef newEvent = CGEventCreate(NULL);
+    CGEventSetLocation(newEvent, location);
+    
+    // Get window list at this location
+    CFArrayRef windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+    
+    if (windowList) {
+        CFIndex count = CFArrayGetCount(windowList);
+        for (CFIndex i = 0; i < count; i++) {
+            CFDictionaryRef windowInfo = (CFDictionaryRef)CFArrayGetValueAtIndex(windowList, i);
+            
+            // Get window bounds
+            CFDictionaryRef bounds = (CFDictionaryRef)CFDictionaryGetValue(windowInfo, kCGWindowBounds);
+            if (bounds) {
+                CGRect windowRect;
+                if (CGRectMakeWithDictionaryRepresentation(bounds, &windowRect)) {
+                    if (CGRectContainsPoint(windowRect, location)) {
+                        // Get owner name
+                        CFStringRef ownerName = (CFStringRef)CFDictionaryGetValue(windowInfo, kCGWindowOwnerName);
+                        if (ownerName) {
+                            NSString* appName = (__bridge NSString*)ownerName;
+                            CFRelease(windowList);
+                            return appName;
+                        }
+                    }
+                }
+            }
+        }
+        CFRelease(windowList);
+    }
+    
+    return nil;
+}
+
+#pragma mark - NSTableViewDataSource
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    return [excludedApps count];
+}
+
+- (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    if (row >= 0 && row < [excludedApps count]) {
+        return [excludedApps objectAtIndex:row];
+    }
+    return @"";
+}
+
+- (void)tableView:(NSTableView *)tableView setObjectValue:(id)object forTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    // Allow editing of app names
+    if (row >= 0 && row < [excludedApps count]) {
+        NSString* oldApp = [excludedApps objectAtIndex:row];
+        NSString* newApp = (NSString*)object;
+        
+        if (![oldApp isEqualToString:newApp]) {
+            // Remove old and add new
+            const char* oldBundleId = [oldApp cStringUsingEncoding:NSUTF8StringEncoding];
+            const char* newBundleId = [newApp cStringUsingEncoding:NSUTF8StringEncoding];
+            
+            removeAppFromExclusionList(oldBundleId);
+            addAppToExclusionList(newBundleId);
+            [self loadExcludedApps];
+        }
+    }
 }
 
 @end
