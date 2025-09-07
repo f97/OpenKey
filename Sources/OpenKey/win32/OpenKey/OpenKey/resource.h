@@ -187,6 +187,7 @@
 #define IDC_BUTTON_CONFIGURE_EXCLUSION   1069
 #define IDC_LIST_EXCLUDED_APPS          1070
 #define IDC_BUTTON_ADD_APP              1071
+#define IDC_BUTTON_ADD_APP_DRAGDROP     1074
 #define IDC_BUTTON_REMOVE_APP           1072
 #define IDC_BUTTON_CLEAR_ALL            1073
 #define IDC_STATIC                      -1
@@ -198,7 +199,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1074
+#define _APS_NEXT_CONTROL_VALUE         1075
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -23,11 +23,21 @@ using namespace std;
 class ExclusionDialog : public BaseDialog {
 private:
     HWND hListView;
+    HHOOK hMouseHook;
+    bool isAppSelectionMode;
+    
     void initDialog();
     void refreshExclusionList();
     void onAddApp();
+    void onAddAppDragDrop();
     void onRemoveApp();
     void onClearAll();
+    void startAppSelection();
+    void stopAppSelection();
+    string getAppNameAtPoint(POINT pt);
+    
+    static LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+    static ExclusionDialog* instance;
     
 public:
     ExclusionDialog(const HINSTANCE& hInstance, const int& resourceId);

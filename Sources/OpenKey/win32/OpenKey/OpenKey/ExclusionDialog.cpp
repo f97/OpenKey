@@ -17,12 +17,22 @@ redistribute your new version, it MUST be open source.
 #include <Shlobj.h>
 #include <Commdlg.h>
 #include <CommCtrl.h>
+#include <Psapi.h>
+
+// Static member initialization
+ExclusionDialog* ExclusionDialog::instance = nullptr;
 
 ExclusionDialog::ExclusionDialog(const HINSTANCE& hInstance, const int& resourceId)
-    : BaseDialog(hInstance, resourceId) {
+    : BaseDialog(hInstance, resourceId), hMouseHook(NULL), isAppSelectionMode(false) {
+    instance = this;
 }
 
 ExclusionDialog::~ExclusionDialog() {
+    if (hMouseHook) {
+        UnhookWindowsHookEx(hMouseHook);
+        hMouseHook = NULL;
+    }
+    instance = nullptr;
 }
 
 void ExclusionDialog::initDialog() {
@@ -184,20 +194,145 @@ void ExclusionDialog::onClearAll() {
     }
 }
 
+void ExclusionDialog::onAddAppDragDrop() {
+    startAppSelection();
+}
+
+void ExclusionDialog::startAppSelection() {
+    // Show instructions
+    int result = MessageBox(hDlg, 
+        _T("Kéo con trỏ đến ứng dụng bạn muốn loại trừ rồi bấm chuột trái.\n\nBấm OK để bắt đầu, Cancel để hủy."), 
+        _T("Chọn ứng dụng để loại trừ"), 
+        MB_OKCANCEL | MB_ICONINFORMATION);
+        
+    if (result == IDOK) {
+        isAppSelectionMode = true;
+        
+        // Change cursor to crosshair
+        SetCursor(LoadCursor(NULL, IDC_CROSS));
+        
+        // Install mouse hook
+        hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, GetModuleHandle(NULL), 0);
+        
+        // Set timer to auto-cleanup after 10 seconds
+        SetTimer(hDlg, 1, 10000, NULL);
+    }
+}
+
+void ExclusionDialog::stopAppSelection() {
+    if (hMouseHook) {
+        UnhookWindowsHookEx(hMouseHook);
+        hMouseHook = NULL;
+    }
+    isAppSelectionMode = false;
+    SetCursor(LoadCursor(NULL, IDC_ARROW));
+    KillTimer(hDlg, 1);
+}
+
+string ExclusionDialog::getAppNameAtPoint(POINT pt) {
+    HWND hwnd = WindowFromPoint(pt);
+    if (!hwnd) return "";
+    
+    // Get the root window
+    HWND rootHwnd = GetAncestor(hwnd, GA_ROOTOWNER);
+    if (!rootHwnd) rootHwnd = hwnd;
+    
+    // Get process ID
+    DWORD processId;
+    GetWindowThreadProcessId(rootHwnd, &processId);
+    
+    // Open process
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    if (!hProcess) return "";
+    
+    // Get executable name
+    TCHAR exeName[MAX_PATH];
+    if (GetModuleBaseName(hProcess, NULL, exeName, MAX_PATH)) {
+        CloseHandle(hProcess);
+        
+        // Convert to UTF-8
+        int size_needed = WideCharToMultiByte(CP_UTF8, 0, exeName, (int)_tcslen(exeName), NULL, 0, NULL, NULL);
+        std::string result(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, exeName, (int)_tcslen(exeName), &result[0], size_needed, NULL, NULL);
+        
+        return result;
+    }
+    
+    CloseHandle(hProcess);
+    return "";
+}
+
+LRESULT CALLBACK ExclusionDialog::MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode >= 0 && instance && instance->isAppSelectionMode) {
+        if (wParam == WM_LBUTTONDOWN) {
+            PMSLLHOOKSTRUCT pMouseStruct = (PMSLLHOOKSTRUCT)lParam;
+            POINT pt = pMouseStruct->pt;
+            
+            string appName = instance->getAppNameAtPoint(pt);
+            
+            if (!appName.empty()) {
+                // Check if already excluded
+                if (isAppExcluded(appName)) {
+                    WCHAR msg[512];
+                    // Convert to wide string for display
+                    int size_needed = MultiByteToWideChar(CP_UTF8, 0, appName.c_str(), (int)appName.length(), NULL, 0);
+                    std::wstring wstr(size_needed, 0);
+                    MultiByteToWideChar(CP_UTF8, 0, appName.c_str(), (int)appName.length(), &wstr[0], size_needed);
+                    
+                    wsprintf(msg, _T("'%s' đã có trong danh sách."), wstr.c_str());
+                    MessageBox(instance->hDlg, msg, _T("Thông báo"), MB_OK | MB_ICONINFORMATION);
+                } else {
+                    // Add to exclusion list
+                    addAppToExclusionList(appName);
+                    saveExclusionListData();
+                    instance->refreshExclusionList();
+                    
+                    // Show confirmation
+                    WCHAR msg[512];
+                    // Convert to wide string for display
+                    int size_needed = MultiByteToWideChar(CP_UTF8, 0, appName.c_str(), (int)appName.length(), NULL, 0);
+                    std::wstring wstr(size_needed, 0);
+                    MultiByteToWideChar(CP_UTF8, 0, appName.c_str(), (int)appName.length(), &wstr[0], size_needed);
+                    
+                    wsprintf(msg, _T("Đã thêm '%s' vào danh sách loại trừ."), wstr.c_str());
+                    MessageBox(instance->hDlg, msg, _T("Thành công"), MB_OK | MB_ICONINFORMATION);
+                }
+            } else {
+                MessageBox(instance->hDlg, _T("Không thể xác định ứng dụng tại vị trí này."), _T("Lỗi"), MB_OK | MB_ICONWARNING);
+            }
+            
+            instance->stopAppSelection();
+            return 1; // Block the mouse click
+        }
+    }
+    return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
 INT_PTR ExclusionDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_INITDIALOG:
         this->hDlg = hDlg;
         initDialog();
         return TRUE;
+    case WM_TIMER:
+        if (wParam == 1) {
+            // Timeout for app selection mode
+            stopAppSelection();
+            MessageBox(hDlg, _T("Thời gian chọn ứng dụng đã hết. Vui lòng thử lại."), _T("Hết thời gian"), MB_OK | MB_ICONINFORMATION);
+        }
+        break;
     case WM_COMMAND: {
         int wmId = LOWORD(wParam);
         switch (wmId) {
         case IDOK:
+            stopAppSelection(); // Clean up if dialog is closed during selection
             EndDialog(hDlg, IDOK);
             break;
         case IDC_BUTTON_ADD_APP:
             onAddApp();
+            break;
+        case IDC_BUTTON_ADD_APP_DRAGDROP:
+            onAddAppDragDrop();
             break;
         case IDC_BUTTON_REMOVE_APP:
             onRemoveApp();

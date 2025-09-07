@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "MyTextField.h"
 
-@interface ViewController : NSViewController<MyTextFieldDelegate>
+@interface ViewController : NSViewController<MyTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate>
 @property (strong) IBOutlet NSView *viewParent;
 @property (weak) IBOutlet NSButton *tabbuttonPrimary;
 @property (weak) IBOutlet NSButton *tabbuttonMacro;
@@ -69,6 +69,10 @@
 @property (weak) IBOutlet NSTextField *VersionInfo;
 
 @property (weak) IBOutlet NSImageView *cursorImage;
+
+@property (weak) IBOutlet NSTableView *excludedAppsTable;
+@property (weak) IBOutlet NSButton *addExcludedAppButton;
+@property (weak) IBOutlet NSButton *removeExcludedAppButton;
 
 -(void)fillData;
 @end

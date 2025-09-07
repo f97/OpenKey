@@ -1546,8 +1546,107 @@
                                 <color key="borderColor" name="unemphasizedSelectedContentBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="fillColor" name="alternatingContentBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </box>
+                            <box fixedFrame="YES" boxType="custom" cornerRadius="4" title="GroupExcludedApps" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="Jht-8d-gP4">
+                                <rect key="frame" x="20" y="120" width="520" height="220"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <view key="contentView" id="wqp-F9-8pv">
+                                    <rect key="frame" x="1" y="1" width="518" height="218"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Exc-Lab-1">
+                                            <rect key="frame" x="18" y="185" width="126" height="17"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Loại trừ ứng dụng:" id="Exc-Lab-Cell-1">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                        <scrollView fixedFrame="YES" borderType="bezel" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Exc-Scroll-1">
+                                            <rect key="frame" x="18" y="45" width="350" height="130"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <clipView key="contentView" id="Exc-Clip-1">
+                                                <rect key="frame" x="1" y="1" width="348" height="128"/>
+                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                <subviews>
+                                                    <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="Exc-Header-1" viewBased="YES" id="Exc-Table-1">
+                                                        <rect key="frame" x="0.0" y="0.0" width="348" height="105"/>
+                                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                        <size key="intercellSpacing" width="3" height="2"/>
+                                                        <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                        <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
+                                                        <tableColumns>
+                                                            <tableColumn width="345" minWidth="40" maxWidth="1000" id="Exc-Col-1">
+                                                                <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" title="Tên ứng dụng">
+                                                                    <font key="font" metaFont="smallSystem"/>
+                                                                    <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
+                                                                    <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
+                                                                </tableHeaderCell>
+                                                                <textFieldCell key="dataCell" lineBreakMode="truncatingTail" selectable="YES" editable="YES" title="Text Cell" id="Exc-Data-Cell-1">
+                                                                    <font key="font" metaFont="system"/>
+                                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                                </textFieldCell>
+                                                                <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
+                                                            </tableColumn>
+                                                        </tableColumns>
+                                                        <connections>
+                                                            <action selector="onExcludedAppSelected:" target="XfG-lQ-9wD" id="Exc-Action-1"/>
+                                                        </connections>
+                                                    </tableView>
+                                                </subviews>
+                                            </clipView>
+                                            <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="Exc-HScroll-1">
+                                                <rect key="frame" x="1" y="112" width="348" height="16"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                            <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="Exc-VScroll-1">
+                                                <rect key="frame" x="333" y="1" width="16" height="128"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </scroller>
+                                            <tableHeaderView key="headerView" id="Exc-Header-1">
+                                                <rect key="frame" x="0.0" y="0.0" width="348" height="23"/>
+                                                <autoresizingMask key="autoresizingMask"/>
+                                            </tableHeaderView>
+                                        </scrollView>
+                                        <button toolTip="Kéo và thả con trỏ vào ứng dụng bạn muốn loại trừ" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Exc-Add-Btn-1">
+                                            <rect key="frame" x="380" y="150" width="50" height="32"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="push" title="..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Exc-Add-Cell-1">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="system" size="15"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="onAddExcludedApp:" target="XfG-lQ-9wD" id="Exc-Add-Action-1"/>
+                                            </connections>
+                                        </button>
+                                        <button toolTip="Xóa ứng dụng đã chọn khỏi danh sách loại trừ" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Exc-Remove-Btn-1">
+                                            <rect key="frame" x="380" y="110" width="50" height="32"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <buttonCell key="cell" type="push" title="Xóa" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Exc-Remove-Cell-1">
+                                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                <font key="font" metaFont="system"/>
+                                            </buttonCell>
+                                            <connections>
+                                                <action selector="onRemoveExcludedApp:" target="XfG-lQ-9wD" id="Exc-Remove-Action-1"/>
+                                            </connections>
+                                        </button>
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Exc-Help-Text-1">
+                                            <rect key="frame" x="18" y="10" width="480" height="26"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Các ứng dụng trong danh sách này sẽ không sử dụng OpenKey. Bấm ... để thêm ứng dụng mới bằng cách kéo thả con trỏ." id="Exc-Help-Cell-1">
+                                                <font key="font" metaFont="smallSystem"/>
+                                                <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </subviews>
+                                </view>
+                                <color key="borderColor" name="unemphasizedSelectedContentBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                <color key="fillColor" name="alternatingContentBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </box>
                             <box fixedFrame="YES" boxType="custom" cornerRadius="4" title="GroupSystem" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="t87-77-f7T">
-                                <rect key="frame" x="20" y="132" width="520" height="210"/>
+                                <rect key="frame" x="20" y="5" width="520" height="210"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <view key="contentView" id="M14-QO-gmg">
                                     <rect key="frame" x="1" y="1" width="518" height="208"/>
@@ -1730,6 +1829,9 @@
                         <outlet property="tabviewPrimary" destination="HsQ-jf-eR7" id="jGB-f6-4If"/>
                         <outlet property="tabviewSystem" destination="mf4-Da-qrL" id="6XT-Iw-2eZ"/>
                         <outlet property="viewParent" destination="m2S-Jp-Qdl" id="ufo-Jc-Pmp"/>
+                        <outlet property="excludedAppsTable" destination="Exc-Table-1" id="Exc-Outlet-Table"/>
+                        <outlet property="addExcludedAppButton" destination="Exc-Add-Btn-1" id="Exc-Outlet-Add"/>
+                        <outlet property="removeExcludedAppButton" destination="Exc-Remove-Btn-1" id="Exc-Outlet-Remove"/>
                     </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
