@@ -30,6 +30,7 @@ public:
 	BaseDialog(const HINSTANCE& hInstance, const int& resourceId);
 	void show();
 	void bringOnTop();
+	INT_PTR doModal(HWND hWndParent = NULL);
 	virtual void fillData() = 0;
 
 	HWND getHwnd();

@@ -13,6 +13,7 @@ redistribute your new version, it MUST be open source.
 -----------------------------------------------------------*/
 #include "ExclusionDialog.h"
 #include "AppDelegate.h"
+#include "../../../engine/SmartSwitchKey.h"
 #include <Shlobj.h>
 #include <Commdlg.h>
 #include <CommCtrl.h>
@@ -209,4 +210,10 @@ INT_PTR ExclusionDialog::eventProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
     }
     }
     return FALSE;
+}
+
+void ExclusionDialog::fillData() {
+    // This method is called when the dialog needs to be populated with data
+    // For ExclusionDialog, the data is loaded in initDialog() via refreshExclusionList()
+    // No additional filling is needed as the data is loaded dynamically
 }
